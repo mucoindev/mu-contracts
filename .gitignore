@@ -1,0 +1,9 @@
+node_modules/
+contracts/*/artifacts/
+contracts/*/cache/
+contracts/protocol/release/
+.env
+.env.*
+!.env.example
+*.log
+.openzeppelin/

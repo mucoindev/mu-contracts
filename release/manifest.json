@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "version": "1.0.0",
+  "files": {
+    "casino/MuCasino.json": "9397ca31c4126509a6c78b7de2bb53d3e16bc291a6b7164071b8994d761f5df3",
+    "dogy/MuDogyTest.json": "55e1de0d5211eaa91bfbaed9ffb15b6520a912cc816d0ad9b311e55253483061",
+    "ecosystem/artifacts.json": "7af0d0da293865b28721e59bb88038d18f81444d8355d4a3d02284a9affbb46f",
+    "otc/MuOTC.json": "c3c116f3cdc693f7e788d7b6e1da52db577646e2cb3c060df8cd1fb92bcca2d9",
+    "otc/SimpleOTC.json": "162ee8b0b2e8a654c66f05ba46313c65c18663b9a1a85b4e0d21cfe41090fe1a",
+    "sources/ecosystem/MuGovernance.sol": "3c90afb21ebb27145340184c95765766f4bef22acb183c0a9f39c7e64f63d63d",
+    "sources/ecosystem/MuTools.sol": "9bec720efe092d10cada5662be70ed259d2da5dee6254c5bb6838bf19bd9002c",
+    "treasury/abi.json": "a6a7b8236382f5a0b8470fdd9b4c7f4f972c658fdfa88f28b48c8f444d75cfbe",
+    "treasury/artifact.json": "7a0694ad22ad64cce6c23d82cb60df3465c4645449bc11bdc536d3eaba14d18d",
+    "world/TrailMarket.json": "71e74e8ea99d1b6c643563a2899c3c714c11c8cf76a8ddff6319b1a887d9963e",
+    "world/TrailMarketAbi.json": "f66986cf28519bc6fa22ae5a12a13218e460d903f555003a415fc8bf55df2983"
+  }
+}

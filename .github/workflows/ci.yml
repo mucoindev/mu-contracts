@@ -1,0 +1,58 @@
+name: contracts
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: contracts-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/manifest.mjs
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [casino, dogy, ecosystem, otc, protocol, treasury, world]
+    defaults:
+      run:
+        working-directory: contracts/${{ matrix.project }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: contracts/${{ matrix.project }}/package-lock.json
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npx hardhat test
+      - if: matrix.project == 'protocol'
+        run: npm run release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: contracts-${{ matrix.project }}-${{ github.sha }}
+          path: |
+            contracts/${{ matrix.project }}/artifacts/build-info/
+            contracts/${{ matrix.project }}/release/
+          if-no-files-found: error
+          retention-days: 30
+  release-ready:
+    if: always()
+    needs: [manifest, test]
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          MANIFEST: ${{ needs.manifest.result }}
+          TEST: ${{ needs.test.result }}
+        run: test "$MANIFEST" = success && test "$TEST" = success

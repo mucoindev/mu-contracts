@@ -1,0 +1,4 @@
+# The exported deployedBytecodeHash commits to the compiler metadata, which
+# hashes every source file byte for byte. Keep LF everywhere so a fresh clone on
+# any OS (core.autocrlf or not) recompiles to the same bytecode.
+* text=auto eol=lf

@@ -1,0 +1,2 @@
+# Keep Solidity source hashes (and the verified runtime metadata) reproducible.
+*.sol text eol=lf

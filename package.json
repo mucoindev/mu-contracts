@@ -1,0 +1,11 @@
+{
+  "name": "@mu/contracts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "release:prepare": "node scripts/manifest.mjs --write",
+    "release:check": "node scripts/manifest.mjs",
+    "ship": "node scripts/ship.mjs"
+  }
+}
