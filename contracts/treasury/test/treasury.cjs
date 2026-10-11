@@ -1,6 +1,8 @@
 const {expect}=require('chai');
 const {ethers}=require('hardhat');
 const {loadFixture,time}=require('@nomicfoundation/hardhat-network-helpers');
+const {artifacts}=require('hardhat');
+const shipped=require('../../../release/treasury/artifact.json');
 const unit=ethers.parseEther;
 async function fixture(){
  const [owner,buyer,other,dao]=await ethers.getSigners();
@@ -15,6 +17,7 @@ async function fixture(){
 }
 async function buy(f,amount=unit('2'),cost=12000000n,rev){return f.t.connect(f.buyer).buy(f.usdc.target,amount,cost,rev??await f.t.revision(),(await time.latest())+600);}
 describe('Existing MUV sale and protocol-owned liquidity',function(){
+ it('ships the exact tested compiler artifact to wallet deployment and registry',async()=>{const compiled=await artifacts.readArtifact('MuTreasury');expect(shipped.bytecode).eq(compiled.bytecode);expect(shipped.runtime).eq(compiled.deployedBytecode);expect(shipped.abi).deep.eq(compiled.abi);});
  it('starts paused, at 25%, with zero inventory and no minting',async()=>{const f=await loadFixture(fixture);const t=await (await ethers.getContractFactory('MuTreasury')).deploy(f.owner.address,f.muv.target,f.mu.target,f.router.target,f.wavax.target);expect(await t.saleOpen()).eq(false);expect(await t.discountBps()).eq(2500);expect(await f.muv.balanceOf(t.target)).eq(0);expect(await f.muv.totalSupply()).eq(unit('10000'));});
  it('sells existing inventory and keeps all payment in reserves',async()=>{const f=await loadFixture(fixture);await buy(f);expect(await f.muv.balanceOf(f.buyer.address)).eq(unit('2'));expect(await f.muv.totalSupply()).eq(unit('10000'));expect(await f.usdc.balanceOf(f.t.target)).eq(12000000);expect(await f.t.totalSold()).eq(unit('2'));expect(await f.t.totalReceived(f.usdc.target)).eq(12000000);expect(await f.router.lastSwap()).eq(0);});
  it('rounds fractional purchases up, including six-decimal payments',async()=>{const f=await loadFixture(fixture);expect(await f.t.quote(f.usdc.target,1n)).eq(1);await buy(f,1n,1n);expect(await f.usdc.balanceOf(f.t.target)).eq(1);});
