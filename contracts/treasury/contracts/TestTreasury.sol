@@ -37,3 +37,16 @@ contract TestRouter {
         pair.transferFrom(msg.sender,address(this),n);TestToken(a).transfer(to,n);TestToken(b).transfer(to,n);return(n,n);
     }
 }
+
+contract TestMuPriceOracle {
+    uint256 public getMugUSDPrice=8e18;
+    uint256 public getMuUSDprice=2e16;
+    function setPrices(uint256 mug,uint256 mu) external { getMugUSDPrice=mug; getMuUSDprice=mu; }
+}
+contract TestPricePair {
+    address public token0; address public token1;
+    uint112 private r0; uint112 private r1;
+    constructor(address a,address b,uint112 aReserve,uint112 bReserve) { token0=a;token1=b;r0=aReserve;r1=bReserve; }
+    function getReserves() external view returns(uint112,uint112,uint32) { return (r0,r1,uint32(block.timestamp)); }
+    function setReserves(uint112 a,uint112 b) external { r0=a;r1=b; }
+}
