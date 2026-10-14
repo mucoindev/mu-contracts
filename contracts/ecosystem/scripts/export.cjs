@@ -3,7 +3,7 @@ const path = require('path');
 const hre = require('hardhat');
 async function main() {
   const result = {};
-  for (const name of ['MuFixedToken','MuVesting','MuSubscription','MuVotes','MuGovernor','MuTimelock']) {
+  for (const name of ['MuFixedToken','MuVesting','MuSubscription','MuGovernor','MuTimelock']) {
     const a = await hre.artifacts.readArtifact(name);
     const info = await hre.artifacts.getBuildInfo(`${a.sourceName}:${name}`);
     const immutableRanges = Object.values(info.output.contracts[a.sourceName][name].evm.deployedBytecode.immutableReferences || {}).flat();
