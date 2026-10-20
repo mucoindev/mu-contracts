@@ -71,6 +71,7 @@ contract MuPortfolio is ReentrancyGuard {
         require(assets.length > 0 && assets.length <= 6 && aggregator_.code.length > 0, "assets");
         usdc = usdc_; mug = mug_; feeRecipient = recipient_; router = router_; liquidityRouter = lpRouter_;
         aggregator = aggregator_; wrappedNative = assets[0];
+        supported[usdc_] = true;
         factory = IPortfolioV1(lpRouter_).factory();
         require(factory.code.length > 0, "factory");
         for (uint256 i; i < assets.length; ++i) {
@@ -150,7 +151,8 @@ contract MuPortfolio is ReentrancyGuard {
         ownerIds[msg.sender].push(id);
         for (uint256 i; i < legs.length; ++i) {
             Leg calldata l = legs[i];
-            uint256 output = _trade(usdc, l.token, l.amountIn, l.swap, deadline);
+            require(l.amountIn > 0, "amount");
+            uint256 output = l.token == usdc ? l.amountIn : _trade(usdc, l.token, l.amountIn, l.swap, deadline);
             p.tokens.push(l.token); p.costs.push(l.amountIn); p.bought.push(output); p.held.push(output);
         }
         p.feeMUG = _trade(usdc,mug,fee,feeSwap,deadline);
@@ -169,7 +171,9 @@ contract MuPortfolio is ReentrancyGuard {
             p.lp = IERC20(p.pair).balanceOf(address(this)) - beforeLP;
             require(p.lp >= lpMinimums[2], "LP output");
         }
-        require(IERC20(usdc).balanceOf(address(this)) == beforeUSDC + p.reserveUSDC, "unspent USDC");
+        uint256 heldUSDC;
+        for (uint256 i; i < p.tokens.length; ++i) if (p.tokens[i] == usdc) heldUSDC += p.held[i];
+        require(IERC20(usdc).balanceOf(address(this)) == beforeUSDC + p.reserveUSDC + heldUSDC, "unspent USDC");
         emit Opened(id, msg.sender, funded, p.feeMUG, p.pair, p.lp);
     }
 
@@ -194,7 +198,13 @@ contract MuPortfolio is ReentrancyGuard {
         }
         for (uint256 i; i < p.tokens.length; ++i) {
             p.exitAmounts.push(p.held[i]);
-            if (p.held[i] > 0) p.proceeds += _swap(p.tokens[i],usdc,p.held[i],minOut[i],paths[i],msg.sender,deadline);
+            if (p.held[i] > 0) {
+                if (p.tokens[i] == usdc) {
+                    require(p.held[i] >= minOut[i], "output");
+                    p.proceeds += p.held[i];
+                    IERC20(usdc).safeTransfer(msg.sender,p.held[i]);
+                } else p.proceeds += _swap(p.tokens[i],usdc,p.held[i],minOut[i],paths[i],msg.sender,deadline);
+            }
             p.held[i] = 0;
         }
         require(p.proceeds >= minTotal, "total output");

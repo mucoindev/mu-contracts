@@ -22,6 +22,37 @@ describe('MuPortfolio atomic wallet-owned cards', function () {
     const args=async(liquidity=false)=>[{token:usdc.target,amount:budget,swap:quote(usdc.target,mug.target)},budget,'My 60/40',structuredClone(legs),quote(usdc.target,mug.target),liquidity,liquidity?[1n,1n,1n]:[0n,0n,0n],await time.latest()+600];
     return{alice,bob,rewards,usdc,avax,btc,mug,router,agg,lp,vault,path,quote,budget,fee,net,legs,args};
   }
+  async function stableFixture() {
+    const f=await fixture();
+    f.lp=await (await ethers.getContractFactory('PortfolioLPMock')).deploy(f.btc.target,f.usdc.target);
+    f.vault=await (await ethers.getContractFactory('MuPortfolio')).deploy(f.usdc.target,f.mug.target,f.rewards.address,f.router.target,f.lp.target,f.agg.target,[f.avax.target,f.btc.target,f.mug.target]);
+    await f.usdc.approve(f.vault.target,1000000000n);
+    f.stableArgs=async(liquidity=false)=>{
+      const a=await f.args(liquidity);
+      a[3]=[{token:f.btc.target,amountIn:f.net*60n/100n,swap:f.quote(f.usdc.target,f.btc.target)},{token:f.usdc.target,amountIn:f.net*40n/100n,swap:{target:ethers.ZeroAddress,minOut:0,data:'0x',path:{pairBinSteps:[],versions:[],tokenPath:[]}}}];return a;
+    };return f;
+  }
+  it('holds USDC without swapping and isolates it from another card and funding surplus',async()=>{
+    const f=await loadFixture(stableFixture);const a=await f.stableArgs();
+    a[0]={token:ethers.ZeroAddress,amount:f.budget+1000n,swap:f.quote(f.avax.target,f.usdc.target)};
+    await f.vault.open(...a,{value:f.budget+1000n});await f.vault.open(...await f.stableArgs());
+    const p=await f.vault.getPosition(1);expect(p.held[1]).eq(f.net*40n/100n);expect(p.reserveUSDC).eq(1000n);
+    await f.router.setFail(true);const before=await f.usdc.balanceOf(f.alice.address);await f.vault.withdrawInKind(1);
+    expect(await f.usdc.balanceOf(f.alice.address)).eq(before+p.held[1]+1000n);
+    expect(await f.usdc.balanceOf(f.vault.target)).eq((await f.vault.getPosition(2)).held[1]);
+  });
+  it('pools BTC and USDC, preserves leftovers and cashes out USDC directly',async()=>{
+    const f=await loadFixture(stableFixture);await f.vault.open(...await f.stableArgs(true));
+    const p=await f.vault.getPosition(1);expect(p.lp).eq(f.net*40n/100n);expect(p.held[0]).eq(f.net*20n/100n);
+    const empty={pairBinSteps:[],versions:[],tokenPath:[]};
+    await f.vault.cashOut(1,[f.path(f.btc.target,f.usdc.target),empty],[1,1],[1,1],f.net,await time.latest()+600);
+    expect((await f.vault.getPosition(1)).proceeds).eq(f.net);expect(await f.usdc.balanceOf(f.vault.target)).eq(0);
+  });
+  it('enforces the USDC exit minimum and rolls back the pool removal',async()=>{
+    const f=await loadFixture(stableFixture);await f.vault.open(...await f.stableArgs(true));
+    await expect(f.vault.cashOut(1,[f.path(f.btc.target,f.usdc.target),{pairBinSteps:[],versions:[],tokenPath:[]}],[1,f.budget],[1,1],1,await time.latest()+600)).revertedWith('output');
+    expect((await f.vault.getPosition(1)).exitKind).eq(0);expect((await f.vault.getPosition(1)).lp).greaterThan(0n);
+  });
   it('records exact lots, cost, source, fee and timestamp in one transaction',async()=>{
     const f=await loadFixture(fixture); await expect(f.vault.open(...await f.args())).to.emit(f.vault,'Opened');
     const p=await f.vault.getPosition(1); expect(p.owner).eq(f.alice.address); expect(p.totalUSDC).eq(f.budget); expect(p.sourceAmount).eq(f.budget);
@@ -69,7 +100,7 @@ describe('MuPortfolio atomic wallet-owned cards', function () {
     a=await f.args(); a[3][1].token=a[3][0].token; await expect(f.vault.open(...a)).revertedWith('duplicate');
     a=await f.args();a[3][0].swap.minOut=0;await expect(f.vault.open(...a)).revertedWith('trade');
     a=await f.args();a[7]=1;await expect(f.vault.open(...a)).revertedWith('deadline');
-    a=await f.args();a[3][0].token=f.usdc.target;await expect(f.vault.open(...a)).revertedWith('unsupported');
+    a=await f.args();a[3][0].token=f.bob.address;await expect(f.vault.open(...a)).revertedWith('unsupported');
   });
   it('rejects partially spent aggregator input and rolls back all prior legs on a bad fee',async()=>{
     const f=await loadFixture(fixture);let a=await f.args();const leg=a[3][0];leg.swap.target=f.agg.target;

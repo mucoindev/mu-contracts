@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "1.3.0",
+  "version": "1.4.0",
   "files": {
     "casino/MuCasino.json": "9397ca31c4126509a6c78b7de2bb53d3e16bc291a6b7164071b8994d761f5df3",
     "dogy/MuDogyTest.json": "55e1de0d5211eaa91bfbaed9ffb15b6520a912cc816d0ad9b311e55253483061",
@@ -8,7 +8,7 @@
     "otc/MuOTC.json": "c3c116f3cdc693f7e788d7b6e1da52db577646e2cb3c060df8cd1fb92bcca2d9",
     "otc/SimpleOTC.json": "162ee8b0b2e8a654c66f05ba46313c65c18663b9a1a85b4e0d21cfe41090fe1a",
     "portfolio/abi.json": "7ebad3287e396856d97445b1323f90172278fb6ba6e03da9614d4802875c0b99",
-    "portfolio/artifact.json": "4052fc405252cdf679c795b4ce3f971f54c94358b7e6823dfc0226c7c2c6bfb5",
+    "portfolio/artifact.json": "5081e53edef8d02619e342b554ccf09c8c1b4800a0deaf2e72152604e72c7d36",
     "sources/ecosystem/MuGovernance.sol": "188b83e07957bf2004594b7238f61eb1dd4012629b15afd94ba5a1f45615669a",
     "sources/ecosystem/MuTools.sol": "9bec720efe092d10cada5662be70ed259d2da5dee6254c5bb6838bf19bd9002c",
     "treasury/abi.json": "a6a7b8236382f5a0b8470fdd9b4c7f4f972c658fdfa88f28b48c8f444d75cfbe",
